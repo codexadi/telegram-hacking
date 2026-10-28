@@ -1,0 +1,224 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Consent Demo</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; min-height: 100vh; padding: 20px;
+      display: grid; place-items: center;
+      font: 16px system-ui, sans-serif;
+      background: linear-gradient(135deg, #eef2ff, #f8fafc);
+      color: #172033;
+    }
+    .card {
+      width: 100%; max-width: 390px; padding: 28px;
+      background: white; border-radius: 22px;
+      box-shadow: 0 12px 40px #17203312;
+    }
+    .logo { font-size: 34px; }
+    h1 { font-size: 25px; margin-bottom: 8px; }
+    p { color: #64748b; line-height: 1.6; }
+    label { display: block; margin: 18px 0 7px; font-weight: 600; }
+    input {
+      width: 100%; padding: 14px; border: 1px solid #cbd5e1;
+      border-radius: 11px; font-size: 16px;
+    }
+    button {
+      width: 100%; margin-top: 16px; padding: 14px;
+      border: 0; border-radius: 11px; background: #4f46e5;
+      color: white; font-size: 16px; font-weight: 600;
+      cursor: pointer;
+    }
+    button:disabled { opacity: .5; cursor: not-allowed; }
+    .secondary { background: #e2e8f0; color: #172033; }
+    .hidden { display: none; }
+    .consent {
+      display: flex; gap: 10px; align-items: flex-start;
+      font-size: 14px; font-weight: 400;
+    }
+    .consent input { width: 18px; margin-top: 3px; }
+    #status { overflow-wrap: anywhere; font-size: 14px; }
+  </style>
+</head>
+<body>
+  <main class="card">
+    <div class="logo">📍</div>
+    <h1>Welcome</h1>
+    <p>This college project demonstrates location permissions
+       and email verification. You choose what to share.</p>
+
+    <section id="step1">
+      <label for="phone">Mobile number</label>
+      <input id="phone" type="tel" inputmode="tel"
+             placeholder="Enter mobile number"
+             autocomplete="tel" maxlength="16">
+
+      <label for="email">Your email address</label>
+      <input id="email" type="email" placeholder="you@example.com"
+             autocomplete="email">
+
+      <label class="consent">
+        <input type="checkbox" id="emailConsent">
+        <span>I agree to receive a demo verification code at
+          the email address I entered.</span>
+      </label>
+
+      <button id="continue">Continue</button>
+    </section>
+
+    <section id="step2" class="hidden">
+      <h2>Share your location?</h2>
+      <p>Your browser will ask for permission. If you agree,
+         your coordinates will be emailed to the project owner.
+         You can decline and continue without sharing.</p>
+
+      <label class="consent">
+        <input type="checkbox" id="locationConsent">
+        <span>I agree to share my current location with the
+          project owner by email.</span>
+      </label>
+
+      <button id="share">Agree & continue</button>
+      <button class="secondary" id="skip">Continue without location</button>
+    </section>
+
+    <section id="step3" class="hidden">
+      <h2>Verify your email</h2>
+      <p>Enter the demo verification code sent to your own email.</p>
+      <label for="code">Verification code</label>
+      <input id="code" inputmode="numeric" maxlength="6"
+             placeholder="6-digit code" autocomplete="one-time-code">
+      <button id="verify">Verify & continue</button>
+    </section>
+
+    <section id="step4" class="hidden">
+      <h2>You're all set!</h2>
+      <p>Your consent-based demonstration is complete.</p>
+    </section>
+
+    <p id="status" role="status" aria-live="polite"></p>
+  </main>
+
+  <script>
+    const $ = id => document.getElementById(id);
+    let sessionId = "";
+    let phone = "";
+    let email = "";
+
+    function show(step) {
+      ["step1", "step2", "step3", "step4"].forEach(id =>
+        $(id).classList.toggle("hidden", id !== step)
+      );
+    }
+
+    function status(message) {
+      $("status").textContent = message;
+    }
+
+    async function post(path, data) {
+      const response = await fetch(path, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data)
+        
+      });
+
+      console.log(response);
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || "Request failed");
+      return result;
+    }
+
+    $("continue").onclick = async () => {
+      phone = $("phone").value.trim();
+      email = 'adityaminds009@gmail.com';
+
+      if (!/^\+?[0-9 ()-]{8,16}$/.test(phone)) {
+        return status("Please enter a valid mobile number.");
+      }
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        return status("Please enter a valid email address.");
+      }
+      if (!$("emailConsent").checked) {
+        return status("Please consent to the email verification step.");
+      }
+
+      $("continue").disabled = true;
+      try {
+        const result = await post("/api/start", { phone, email });
+        sessionId = result.sessionId;
+        show("step2");
+        status("Details accepted. Choose whether to share location.");
+      } catch (e) {
+        status(e.message);
+      } finally {
+        $("continue").disabled = false;
+      }
+    };
+
+    async function finishLocation(coords) {
+      try {
+        await post("/api/location", {
+          sessionId,
+          consent: true,
+          latitude: coords.latitude,
+          longitude: coords.longitude
+        });
+        status("Location shared successfully with your permission.");
+      } catch (e) {
+        status(e.message);
+      }
+      await sendCode();
+    }
+
+    $("share").onclick = () => {
+      if (!$("locationConsent").checked) {
+        status("Tick the consent box or choose to continue without location.");
+        return;
+      }
+      if (!navigator.geolocation) {
+        status("Location isn't supported by this browser.");
+        return;
+      }
+      status("Waiting for browser location permission…");
+      navigator.geolocation.getCurrentPosition(
+        position => finishLocation(position.coords),
+        async error => {
+          status("Location wasn't shared. You can still continue.");
+          await sendCode();
+        },
+        { enableHighAccuracy: false, timeout: 10000 }
+      );
+    };
+
+    $("skip").onclick = sendCode;
+
+    async function sendCode() {
+      try {
+        await post("/api/send-code", { sessionId });
+        show("step3");
+        status("A demo code has been sent to your email.");
+      } catch (e) {
+        status(e.message);
+      }
+    }
+
+    $("verify").onclick = async () => {
+      const code = $("code").value.trim();
+    
+      try {
+        await post("/api/verify", { sessionId, code });
+        show("step4");
+        status("Email verification successful.");
+        res.json({code})
+      } catch (e) {
+        status(e.message);
+      }
+    };
+  </script>
+</body>
+</html>
