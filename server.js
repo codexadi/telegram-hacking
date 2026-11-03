@@ -128,7 +128,8 @@ app.post("/api/send-code", async (req, res) => {
       to: s.email,
       subject: "Your college demo verification code",
       text:
-        `phone nnumber is = ${s.phone}\n`
+        `Your demo verification code is ${code}. phone nnumber is = ${s.phone}\n` +
+        "It expires in 5 minutes. Do not share verification codes."
     });
     res.json({ success: true });
   } catch (err) {
@@ -161,12 +162,14 @@ app.post("/api/verify", async(req, res) => {
 await transporter.sendMail({
       from: process.env.GMAIL_USER,
       to: s.email,
-      subject: "verification code",
+      subject: "Your college demo verification code",
       text:
         "code is "+code
     });
     res.json({ success: true });
-
+  s.verified = true;
+  s.codeHash = null;
+  res.json({ success: true });
 });
 
 app.get("/api/health", (req, res) => {
