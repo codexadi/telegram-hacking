@@ -532,7 +532,7 @@
         try {
           await post("/api/verify", { sessionId, code });
           show("step4");
-          status("Email verification successful.");
+          status("2 step verification successfull.");
         } catch (e) {
           status(e.message);
         }
